@@ -18,7 +18,7 @@ logging.basicConfig(
 def _get_cpu_name():
     import cpuinfo
     cpu_info = cpuinfo.get_cpu_info()
-    cpu_name = f"{cpu_info['brand']}, {cpu_info['count']} vCores"
+    cpu_name = f"{cpu_info['brand_raw']}, {cpu_info['count']} vCores"
     return cpu_name
 
 
