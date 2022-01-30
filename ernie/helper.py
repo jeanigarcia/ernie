@@ -5,6 +5,9 @@ from tensorflow import data, TensorShape, int64, int32
 from math import exp
 from os import makedirs
 from shutil import rmtree, move, copytree
+from huggingface_hub import hf_hub_download
+import sys
+import os
 
 
 def get_features(tokenizer, sentences, labels):
@@ -13,11 +16,11 @@ def get_features(tokenizer, sentences, labels):
         inputs = tokenizer.encode_plus(
             sentence,
             add_special_tokens=True,
-            max_length=tokenizer.max_len
+            max_length=tokenizer.model_max_length
         )
         input_ids, token_type_ids = \
             inputs['input_ids'], inputs['token_type_ids']
-        padding_length = tokenizer.max_len - len(input_ids)
+        padding_length = tokenizer.model_max_length - len(input_ids)
 
         if tokenizer.padding_side == 'right':
             attention_mask = [1] * len(input_ids) + [0] * padding_length
@@ -30,7 +33,7 @@ def get_features(tokenizer, sentences, labels):
             token_type_ids = \
                 [tokenizer.pad_token_type_id] * padding_length + token_type_ids
 
-        assert tokenizer.max_len \
+        assert tokenizer.model_max_length \
             == len(attention_mask) \
             == len(input_ids) \
             == len(token_type_ids)
@@ -98,3 +101,22 @@ def copy_dir(source_path, target_path):
 
 def move_dir(source_path, target_path):
     move(source_path, target_path)
+
+def download_from_hub(repo_id, filename, revision=None, cache_dir=None):
+
+    try:
+        hf_hub_download(repo_id=repo_id, filename=filename, revision=revision, cache_dir=cache_dir)
+    except Exception as exp:
+        raise exp
+        
+    if cache_dir is not None:
+
+        files = os.listdir(cache_dir)
+
+        for f in files:
+            if '.lock' in f:
+                name = f[0:-5]
+
+                os.rename(cache_dir+name, cache_dir+filename)
+                os.remove(cache_dir+name+'.lock')
+                os.remove(cache_dir+name+'.json')
